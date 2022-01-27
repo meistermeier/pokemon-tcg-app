@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Rare Cards</title>
+</head>
+<body>
+<p th:text="${cards.size()}"></p>
+<table>
+    <thead>
+        <tr>
+            <th>Card</th><th>Set</th><th>Number</th><th>Rarity</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr th:each="card : ${cards}">
+            <td th:text="${card.name()}"></td>
+            <td th:text="${card.cardSet().name()} + '(' + ${card.cardSet().series().name()} +')'"></td>
+            <td th:text="${card.numberInSet()} + '/' + ${card.cardSet().printedTotal()}"></td>
+            <td th:text="${card.rarity().rarity()}"></td>
+        </tr>
+    </tbody>
+</table>
+</body>
+</html>

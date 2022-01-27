@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Card Details</title>
+</head>
+<body>
+<header><p th:text="${card.name()}"></p></header>
+<img th:src="${card.imgUrl()}" />
+<footer><p th:text="'Part of set ' + ${card.cardSet().name()}"></p></footer>
+</body>
+</html>
