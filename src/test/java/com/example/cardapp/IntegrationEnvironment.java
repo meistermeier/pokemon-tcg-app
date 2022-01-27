@@ -32,7 +32,7 @@ public class IntegrationEnvironment {
                 return;
             }
             session.run("""
-                            CREATE CONSTRAINT cardId FOR (card:Card) REQUIRE card.id IS UNIQUE
+                            CREATE CONSTRAINT cardId IF NOT EXISTS FOR (card:Card) REQUIRE card.id IS UNIQUE
                     """);
             session.run("""
                             CREATE INDEX cardName IF NOT EXISTS
@@ -65,7 +65,8 @@ public class IntegrationEnvironment {
                         hp: toInteger(value.hp),
                         imgUrl: value.images.large,
                         numberInSet: toInteger(value.number),
-                        nationalPokedexNumbers: value.nationalPokedexNumbers
+                        nationalPokedexNumbers: value.nationalPokedexNumbers,
+                        evolvesFrom: value.evolvesFrom
                     })
                     WITH card, value, replace(replace(file, ".json", ""), "cards/", "") as setName
                     CALL apoc.create.addLabels(card, [value.supertype]+value.subtypes) yield node as node
@@ -86,8 +87,8 @@ public class IntegrationEnvironment {
                     """).consume();
             session.run("""
                              MATCH (p:Pokémon:Card) where (p.nationalPokedexNumbers is not null and size(p.nationalPokedexNumbers) = 1)
-                             WITH distinct(p.nationalPokedexNumbers[0]) as number
-                             CREATE (:Pokémon:Creature{nationalPokedexNumber: number})
+                             WITH distinct(p.nationalPokedexNumbers[0]) as number, p.evolvesFrom as evolvesFrom
+                             CREATE (:Pokémon:Creature{nationalPokedexNumber: number, evolvesFrom: evolvesFrom})
                     """);
             session.run("""
                              MATCH (p:Pokémon:Creature)
@@ -103,6 +104,13 @@ public class IntegrationEnvironment {
                     MATCH (pc:Pokémon:Card) WHERE pc.name =~ ".*"+p.name+".*"
                     MERGE (pc)-[:IS_POKEMON]->(p)
                     """);
+            session.run("""
+                    MATCH (p:Pokémon:Creature)
+                    MATCH (ef:Pokémon:Creature) WHERE ef.name = p.evolvesFrom
+                    MERGE (ef)-[:EVOLVES_TO]->(p)
+                    """);
+
+            // todo remove import helper param evolvesFrom from Card and Creature
         }
     }
 
