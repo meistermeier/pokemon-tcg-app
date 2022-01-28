@@ -1,0 +1,121 @@
+== Create constraints and indexes
+
+=== Clean up database if other data exists
+[source,cypher]
+----
+MATCH (n) detach delete n
+----
+
+=== Create constraint for Card's id
+[source,cypher]
+----
+CREATE CONSTRAINT cardId IF NOT EXISTS FOR (card:Card) REQUIRE card.id IS UNIQUE
+----
+
+=== Create index for Card's name
+[source,cypher]
+----
+CREATE INDEX cardName IF NOT EXISTS
+FOR (n:Card)
+ON (n.name)
+----
+
+=== Create index for Creature's name
+[source,cypher]
+----
+CREATE INDEX creatureName IF NOT EXISTS
+FOR (n:Creature)
+ON (n.name)
+----
+
+== Import Sets
+[source,cypher]
+----
+CALL apoc.load.json('sets.json', '$.data') yield value
+CREATE (set:Set {
+    name: value.name,
+    id: value.id,
+    symbolUrl: value.symbol,
+    logoUrl: value.logo,
+    printedTotal: value.printedTotal
+})
+MERGE (series:Series {name: value.series})
+MERGE (set)-[:IN_SERIES]->(series)
+----
+
+== Import Cards
+[source,cypher]
+----
+CALL apoc.load.directory('*.json','cards') yield value as file
+CALL apoc.load.json(file) yield value as value
+CREATE (card:Card {
+    id: value.id,
+    name: value.name,
+    hp: toInteger(value.hp),
+    imgUrl: value.images.large,
+    numberInSet: toInteger(value.number),
+    nationalPokedexNumbers: value.nationalPokedexNumbers,
+    evolvesFrom: value.evolvesFrom,
+    evolvesTo: value.evolvesTo
+})
+WITH card, value, replace(replace(file, ".json", ""), "cards/", "") as setName
+CALL apoc.create.addLabels(card, [value.supertype]+value.subtypes) yield node as node
+WITH node, value, setName
+MATCH (set:Set {id: setName})
+MERGE (node)-[:IS_PART_OF]->(set)
+MERGE (r:Rarity {rarity: coalesce(value.rarity, "unknown")})
+MERGE (r)<-[:HAS_RARITY]-(node)
+FOREACH (type in value.types |
+MERGE (t:Type {type: type})
+MERGE (t)<-[:HAS_TYPE]-(node))
+FOREACH (weakness in value.weaknesses |
+MERGE (wt:Type {type: weakness.type})
+MERGE (wt)<-[:HAS_WEAKNESS {value: weakness.value}]-(node))
+FOREACH (resistance in value.resistances |
+MERGE (rt:Type {type: resistance.type})
+MERGE (rt)<-[:HAS_RESISTANCE {value: resistance.value}]-(node))
+----
+
+== Create Creatures
+[source,cypher]
+----
+MATCH (p:Pokémon:Card) where (p.nationalPokedexNumbers is not null and size(p.nationalPokedexNumbers) = 1)
+WITH distinct(p.nationalPokedexNumbers[0]) as number
+CREATE (:Pokémon:Creature{nationalPokedexNumber: number})
+----
+
+== Name Creatures
+[source,cypher]
+----
+MATCH (p:Pokémon:Creature)
+WITH p.nationalPokedexNumber as pokeIndexNumber, p as p
+MATCH (pc:Pokémon:Card) where any(pokidx in pc.nationalPokedexNumbers where pokidx = pokeIndexNumber)
+WITH p, pc ORDER BY size(pc.name) ASC
+WITH p, collect(pc)[0].name as shortestPc
+SET p.name = shortestPc
+----
+
+== Card to Creatures
+[source,cypher]
+----
+MATCH (p:Pokémon:Creature)
+MATCH (pc:Pokémon:Card) WHERE pc.name =~ ".*"+p.name+".*"
+MERGE (pc)-[:IS_POKEMON]->(p)
+WITH p, pc, pc.evolvesFrom AS evolvesFrom, pc.evolvesTo AS evolvesTo WHERE evolvesFrom IS NOT NULL or evolvesTo IS NOT NULL
+SET p.evolvesFrom = pc.evolvesFrom, p.evolvesTo = pc.evolvesTo
+----
+
+== Evolutions
+
+=== Create Evolution relationships
+[source,cypher]
+----
+MATCH (evolvesToPokemon:Pokémon:Creature)
+MATCH (evolvesFromPokemon:Pokémon:Creature)
+WHERE NOT evolvesFromPokemon:Baby AND evolvesToPokemon = evolvesFromPokemon
+AND (evolvesFromPokemon.name = evolvesToPokemon.evolvesFrom
+OR ANY(toName in evolvesFromPokemon.evolvesTo where evolvesToPokemon.name = toName))
+MERGE (evolvesFromPokemon)-[:EVOLVES_TO]->(evolvesToPokemon)
+----
+
+=== Clean up helper parameter
