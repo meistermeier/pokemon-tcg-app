@@ -121,7 +121,7 @@ SET p.evolvesFrom = pc.evolvesFrom, p.evolvesTo = pc.evolvesTo
 ----
 MATCH (evolvesToPokemon:Pokémon:Creature)
 MATCH (evolvesFromPokemon:Pokémon:Creature)
-WHERE NOT evolvesFromPokemon:Baby AND evolvesToPokemon = evolvesFromPokemon
+WHERE NOT evolvesFromPokemon:Baby AND NOT evolvesToPokemon = evolvesFromPokemon
 AND (evolvesFromPokemon.name = evolvesToPokemon.evolvesFrom
 OR ANY(toName in evolvesFromPokemon.evolvesTo where evolvesToPokemon.name = toName))
 MERGE (evolvesFromPokemon)-[:EVOLVES_TO]->(evolvesToPokemon)
