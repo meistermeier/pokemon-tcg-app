@@ -128,3 +128,7 @@ MERGE (evolvesFromPokemon)-[:EVOLVES_TO]->(evolvesToPokemon)
 ----
 
 === Clean up helper parameter
+[source,cypher]
+----
+MATCH (pc:Pokémon) SET pc.evolvesTo = null, pc.evolvesFrom = null
+----
