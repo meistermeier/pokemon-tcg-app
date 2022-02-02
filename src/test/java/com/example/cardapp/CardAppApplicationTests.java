@@ -19,7 +19,7 @@ class CardAppApplicationTests extends IntegrationEnvironment {
     private Driver driver;
 
     @BeforeEach
-    void contextLoads() {
+    void setupData() {
         initDb(driver);
     }
 
