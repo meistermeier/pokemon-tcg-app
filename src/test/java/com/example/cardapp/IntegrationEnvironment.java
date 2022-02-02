@@ -22,15 +22,17 @@ public class IntegrationEnvironment {
     @DynamicPropertySource
     public static void setupNeo4j(DynamicPropertyRegistry registry) {
         container.start();
+        var boltUrl = container.getBoltUrl();
 
-        registry.add("spring.neo4j.uri", container::getBoltUrl);
+        System.out.println("http://" + container.getHost() + ":" + container.getMappedPort(7474) + "/browser?dbms=" + boltUrl);
+
+        registry.add("spring.neo4j.uri", () -> boltUrl);
         registry.add("spring.neo4j.authentication.username", () -> "neo4j");
         registry.add("spring.neo4j.authentication.password", container::getAdminPassword);
     }
 
     public static void initDb(Driver driver) {
         try (var session = driver.session()) {
-            session.run("MATCH (n) detach delete n").consume();
             var c = session.run("MATCH (n:Pokémon) return count(n) as c").single().get("c").asLong();
             if (c > 0) {
                 return;

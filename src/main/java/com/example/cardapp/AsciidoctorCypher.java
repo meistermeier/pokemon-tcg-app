@@ -6,12 +6,11 @@ import org.asciidoctor.ast.Block;
 import org.asciidoctor.ast.StructuralNode;
 import org.neo4j.driver.Driver;
 
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 
 public class AsciidoctorCypher {
 
-	public static void executeDocument(Driver driver, Path documentPath) throws URISyntaxException {
+	public static void executeDocument(Driver driver, Path documentPath) {
 		var asciidoctor = Asciidoctor.Factory.create();
 		var document = asciidoctor.loadFile(documentPath.toFile(), Options.builder().build());
 		handle(driver, document);
