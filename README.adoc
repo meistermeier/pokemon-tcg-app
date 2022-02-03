@@ -1,0 +1,13 @@
+= Pokémon Card browser
+
+== Import
+
+=== Data source
+
+https://pokemontcg.io/[Pokémon TCG]
+
+=== Manual import
+
+You can issue the statements manually.
+Just follow the queries provided in link:src/main/resources/import.adoc[import.adoc].
+
