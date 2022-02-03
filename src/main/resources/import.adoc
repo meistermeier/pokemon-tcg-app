@@ -39,7 +39,7 @@ ON (n.name)
 == Import Sets
 [source,cypher]
 ----
-CALL apoc.load.json('sets.json', '$.data') YIELD value
+CALL apoc.load.json('sets.json') YIELD value
 CREATE (set:Set {
     name: value.name,
     id: value.id,

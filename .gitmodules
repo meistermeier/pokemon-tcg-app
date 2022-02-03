@@ -1,0 +1,3 @@
+[submodule "src/main/resources/pokemon-tcg-data"]
+	path = src/main/resources/pokemon-tcg-data
+	url = git@github.com:PokemonTCG/pokemon-tcg-data.git

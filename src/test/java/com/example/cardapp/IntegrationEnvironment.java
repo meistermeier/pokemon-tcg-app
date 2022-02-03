@@ -12,7 +12,8 @@ import java.nio.file.Paths;
 public class IntegrationEnvironment {
 
     final static Neo4jContainer<?> container = new Neo4jContainer<>("neo4j:4.4")
-            .withCopyFileToContainer(MountableFile.forHostPath("src/main/resources/import/"), "/import")
+            .withCopyFileToContainer(MountableFile.forHostPath("src/main/resources/pokemon-tcg-data/sets/en.json"), "/import/sets.json")
+            .withCopyFileToContainer(MountableFile.forHostPath("src/main/resources/pokemon-tcg-data/cards/en"), "/import/cards/")
             .withEnv("NEO4JLABS_PLUGINS", "[\"apoc\"]")
             .withEnv("NEO4J_dbms_security_procedures_unrestricted", "apoc.\\*")
             .withEnv("apoc.import.file.enabled", "true")
